@@ -33,7 +33,7 @@ def classical_fit_param_summary(p_opt,p_cov, names = None):
 
 
 ############################################################################################################
-# From # 02: Bootstrapping confidence intervals
+# From 02: Bootstrapping confidence intervals
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -97,7 +97,7 @@ def bootstrap_fits(func, x, y, p_opt, n_straps = 1000, res = 100, xpts = None, g
         
         if guess_gen is not None:
             # Generate guesses for this dataset
-            guesses = guess_gen(lg_c,new_y)
+            guesses = guess_gen(x,new_y)
         else:
             # Default guesses
             guesses = np.ones(len(p_opt))
