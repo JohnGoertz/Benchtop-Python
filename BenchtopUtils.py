@@ -5,13 +5,14 @@ import pandas as pd
 import scipy.stats as stats
 
 def classical_fit_intervals(func,p_opt,x,y,xpts):
-    tile_x = np.tile(x,[y.size//x.size,1]).T
+    if x.shape != y.shape:
+        x = np.tile(x,[y.size//x.size,1]).T
     n = y.size
     m = p_opt.size
     dof = n-m                                                # Degrees of freedom
-    res = y - func(tile_x,*p_opt)                            # Residuals
+    res = y - func(x,*p_opt)                            # Residuals
     t = stats.t.ppf((1. + 0.95)/2., n - m)                   # Student's t distribution
-    chi2 = np.sum((res / func(tile_x,*p_opt))**2)            # chi-squared; estimates error in data
+    chi2 = np.sum((res / func(x,*p_opt))**2)            # chi-squared; estimates error in data
     chi2_red = chi2 / dof                                    # reduced chi-squared; measures goodness of fit
     s_err = np.sqrt(np.sum(res**2) / dof)                    # standard error of the fit at each point
 
@@ -21,7 +22,7 @@ def classical_fit_intervals(func,p_opt,x,y,xpts):
 
     return ci, pi
 
-def classical_fit_param_summary(p_opt,p_cov, names = None):
+def classical_fit_param_summary(p_opt, p_cov, names = None):
     nstd = stats.norm.ppf((1. - 0.95)/2.)
     p_std = np.sqrt(np.diag(p_cov))
     p_ci_lower = p_opt - nstd * p_std
@@ -151,9 +152,93 @@ def bootstrap_dists(bootstrap_params, CI = 95, names = None, rug_kws = {}, kde_k
         axs[p].axvline(np.percentile(bootstrap_params[:,p], 50, axis = 0), ls = ':', color = 'k')
         axs[p].axvline(np.percentile(bootstrap_params[:,p], (100+CI)/2, axis = 0), ls = '--', color = 'k')
 
-        KDE = axs[p].get_children()[-14]
+        KDE = axs_[p].lines[0]
         mode[p] = KDE.get_xdata()[np.argmax(KDE.get_ydata())]
         
         axs[p].set_title(names[p] + '\n' + 'mode = {:.3f}'.format(mode[p]))
         
     return fig, axs, mode
+
+def bootstrap_bca(func, x, y, bootstrap_params, CI=95, names = None, guess_gen = None, fit_kwargs = {}):
+    from scipy.special import erfinv
+    from scipy.special import erf
+    import warnings
+
+    def norm_cdf(x):
+        return 0.5*(1+erf(x/2**0.5))
+    
+    def norm_ppf(x):
+        return 2**0.5 * erfinv(2*x-1)
+    
+    def jackknife(data):
+        """
+    Given data points data, where axis 0 is considered to delineate points, return
+    a list of arrays where each array is a set of jackknife indexes.
+    For a given set of data Y, the jackknife sample J[i] is defined as the data set
+    Y with the ith data point deleted.
+        """
+        base = np.arange(0,len(data))
+        return (np.delete(base,i) for i in base)
+    
+    x = x.flatten()
+    y = y.flatten()
+    
+    straps,n_p = bootstrap_params.shape
+    
+    if guess_gen is not None:
+        guesses = guess_gen(x,y)
+    else:
+        guesses = None
+    
+    p_opt,_ = opt.curve_fit(func,x,y, p0=guesses, **fit_kwargs)
+    
+    z0 = norm_ppf( 1.0*np.sum(bootstrap_params < p_opt, axis=0)  / straps )
+    
+    idx_jack = jackknife(y)
+    p_jack = np.array([opt.curve_fit(func,x[idx],y[idx], p0=guesses, **fit_kwargs)[0] for idx in idx_jack])
+    p_jmean = np.mean(p_jack,axis=0)
+    
+    
+    # Acceleration value
+    a = np.sum((p_jmean - p_jack)**3, axis=0) / (
+        6.0 * np.sum((p_jmean - p_jack)**2, axis=0)**1.5)
+    
+    alphas = np.array([100-CI,100+CI])/200.
+    
+    zs = z0 + norm_ppf(alphas)[:,np.newaxis]
+    
+    avals = norm_cdf(z0 + zs/(1-a*zs))
+    
+    nvals = np.round((straps-1)*avals)
+    
+    if np.any(np.isnan(avals)):
+        warnings.warn("Some values were NaN; results are probably unstable " +
+                      "(all values were probably equal)",
+                      stacklevel=2)
+        return
+    if np.any(nvals == 0) or np.any(nvals == straps-1):
+        warnings.warn("Some values used extremal samples; " +
+                      "results are probably unstable.",
+                      stacklevel=2)
+        return
+    elif np.any(nvals < 10) or np.any(nvals >= straps-10):
+        warnings.warn("Some values used top 10 low/high samples; " +
+                      "results may be unstable.",
+                      stacklevel=2)
+    
+    p_lower, p_median, p_upper = [np.zeros(n_p) for _ in range(3)]
+    
+    avals *= 100
+    
+    for p in range(n_p):
+        p_lower[p] = np.percentile(bootstrap_params[:,p],avals[0,p])
+        p_median[p] = np.percentile(bootstrap_params[:,p],50)
+        p_upper[p] = np.percentile(bootstrap_params[:,p],avals[1,p])
+        
+    summary = pd.DataFrame(data = [p_lower,p_median,p_upper],
+                        index = ('{:}% CI Lower Limit'.format(CI),
+                                 'Median Value',
+                                 '{:}% CI Upper Limit'.format(CI)),
+                        columns = names)
+    
+    return summary, avals
