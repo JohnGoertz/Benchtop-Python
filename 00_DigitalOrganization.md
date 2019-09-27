@@ -8,7 +8,28 @@ Hopefully you find this useful!
 
 ## Philosophy of Reproducibility
 
+
 ## Directory Structure
+
+```bash
+JG027
+├── Calculations
+│   └── JG027 Dilutions and Plate Layout.xlsx
+├── Code
+│   ├── Utils
+│   │   ├── myUtils.py
+│   │   └── processQuantStudio.py
+│   └── processJG027.ipynb
+├── Data
+│   ├── JG026 TMCC1 Competitor Efficiency.xls
+│   └── JG027 TMCC1 Competition.xls
+├── JG027 Competitive Amplification 500uM Probes.docx
+└── Results
+    ├── Logistic Growth-Drift Fit Parameters.png
+    ├── Logistic Growth-Drift Fit Parameters.svg
+    ├── Un-Competitive Amplification Efficiencies.png
+    └── Un-Competitive Amplification Efficiencies.svg
+```
 
 ## Jupyter Notebooks
 
