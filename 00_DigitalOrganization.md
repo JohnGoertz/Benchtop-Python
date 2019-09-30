@@ -16,6 +16,14 @@ It's important to remember that the tools here do serve the larger philosophic g
 
 ## Directory Structure
 
+The core component of digital organization is, well, how you organize your files. As an experimentalist, there are several types of files I have for every experiment: calculations of reaction volumes and dilutions, raw instrument data (potentially from multiple instruments), code to process this specific experiment, "utility" code that I use pieces of for multiple experiments, the results (typically figures), and a lab notebook entry that brings it all together.
+
+Before I get into how keep these organized *now*, let me first explain how I *used to* structure everything, and why that slowly drove me to anxiety. I had all my data in one folder, ordered by date I started the experiment. My "lab notebook" was in OneNote, with similar date ordering but divided into different project sections. Some experiment-specific code was stored next to the data, as were the resulting figures, but some "utility" code such as functions for plotting or processing that I used over and over were in an entirely different folder. This utility code folder was shared across the lab, and we periodically updated the code to fix bugs or add capabilities.
+
+This all felt like a very natural system, but problems eventually arose. It was sometimes difficult to find the data folder that corresponded to a specific notebook entry, because I might have accidentaly put different dates for each (date started planning the experiment vs date actually performing it). The reverse was hard too, because the "project" I envisioned the experiment belonging to at the time might have morphed into something else six months later, or I might simply have forgotten which project I put it under. Repeating my own analysis was difficult too: because the utility code had been updated in the time since, it often didn't work the same way anymore. Plus, if that code referenced some file elsewhere in my computer, it may have moved since and I would have to hunt it down (this sort of problem might be insurmountable for someone else trying to reproduce your results).
+
+This has led me to my current "everything contained in a single folder" approach. There's no ambiguity as to the connection between data and notebook entry, and the code will always work because it won't have changed since I ran the experiment. Here's how it works. The parent folder for each experiment is simply my initials followed by sequential numbering. All of the necessary files go in an appropriate subfolder, as shown below.
+
 ```bash
 JG027
 ├── JG027 Competitive Amplification 500uM Probes.docx
@@ -35,6 +43,38 @@ JG027
     ├── Un-Competitive Amplification Efficiencies.png
     └── Un-Competitive Amplification Efficiencies.svg
 ```
+
+Have utility code that you use for multiple experiments? Copy and paste it to every one of those experiments. (Using git/Github will provide a more elegant and powerful way to reuse code this way, as I get into below, but practically speaking it's little different than copy-pasting.) The analysis scripts and modules you'll write are probably very small files; that "processQuantStudio.py" contains nearly 1000 lines of code and comes in at a whopping 35 KB. For most experimental scientists this will be the case, there's no need to be stingy with disc space when you have hundreds of gigabytes or more at your disposal. Same goes with data. Need to reference data from another experiment? Copy and paste it along with the new data. The JG### experiment-naming scheme makes it clear that's what you're doing, and unless the data is hi-res images or movies the storage overhead is minimal.
+
+Keeping everything self-contained like this has the additional advantage that everything can be linked together in your code via short *relative* paths. An *absolute* path specifies where a file is by its explicit location on the drive, something like `C:\User\John\Documents\Research\ELN\JG027\Data`. This is not only cumbersome to read and write, it's fragile: if I change the name of the "ELN" folder to "Lab Notebook", the link becomes broken and I have to rename it in the code too. A *relative* path specifies where a file is in relation to the current folder. If my current folder is `Code`, then I can refer to the `Data` folder simply as `../Data`, because `../` means "go up one folder". I can get to `myUtils.py` with `./Utils/myUtils.py` (the `./` means "this current folder" and is actually somewhat unnecessary).
+
+My "myUtils.py" module has the following Python function that I can call from my "processJG027" notebook to store all these relative paths into variables:
+
+```python
+import pathlib as pl
+import os
+
+def setupPath():
+    # Path to the file calling this function (e.g., processJG027.ipynb)
+    code_pth = pl.Path(os.getcwd())
+    
+    # Path to the "JG###" folder
+    base_pth = code_pth.parent
+    
+    data_pth = base_pth / 'Data'
+    rslt_pth = base_pth / 'Results'
+    
+    return code_pth, base_pth, data_pth, rslt_pth
+```
+
+This structure also makes it easy to call functions from my utility modules `myUtils.py` and `processQuantStudio.py` within my analysis notebook. The imports for `processJG027.ipynb` include:
+
+```python
+from Utils import myUtils as mypy
+from Utils import processQuantStudio as pQS
+```
+
+so I can then call `paths = mypy.setupPath()` to gather the relevant addresses.
 
 ## Jupyter Notebooks
 
