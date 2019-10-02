@@ -100,7 +100,7 @@ In our experimental lab notebooks, we write down all the steps that allowed each
 
 #### Getting set up
 
-If you're on a Linux or Mac machine, you already have git installed. Just open a terminal, navigate to your experiment folder, and you're good to go. For Windows you'll have to download and install it. In either case, you can choose between using the bash terminal (command line) or using the Github Desktop graphical interface. I'd recommend using the terminal; some of the tools I lay out here (like subtree and LFS) I'm really not sure how to do with Github Desktop. It might seem daunting at first, but once you get a hang of navigating your file system (namely using the commands`cd` and `ls`) there are really only five to ten commands you'll use within git.
+If you're on a Linux or Mac machine, you already have git installed. Just open a terminal, navigate to your experiment folder, and you're good to go. For Windows you'll have to download and install it. In either case, you can choose between using the bash terminal (command line) or using the Github Desktop graphical interface. I'd recommend using the terminal; some of the tools I lay out here (like subtree and LFS) I'm really not sure how to do with Github Desktop. It might seem daunting at first, but once you get a hang of navigating your file system (namely using the commands `cd` and `ls`) there are really only five to ten commands you'll use within git.
 
 I'll only quickly go over how to use git in the context of my organization system. There are much more comprehensive guides out there. A few that I'd recommend:
 * __[A Friendly Intro to Git and Github](https://kirstiejane.github.io/friendly-github-intro/)__
@@ -108,6 +108,28 @@ I'll only quickly go over how to use git in the context of my organization syste
  * __[Codecademy](https://www.codecademy.com/learn/learn-git)__ used to have a free tutorial, but it seems to be pro-only now...
 * __[Github's own guide](https://guides.github.com/activities/hello-world/)__
 * __[Git cheatsheet - "no deep shit"](https://rogerdudler.github.io/git-guide/)__
+
+#### Repositories: The Notebook Itself
+
+A git repository (or *repo*) is collection of folders and files you're keeping track of. Let's start by tracking an experiment. 
+* Go to a folder set up like *JG027* above (I'll call sometimes call this the parent folder), then type `git init`. Boom. You've made your first git repo.
+* Add a file to the "Code" folder called "MolecFightClubRules.txt" (if you're in the terminal you can do this with something like `echo "1. Talk about Molecular Fight Club" > Code/MolecFightClubRules.txt`)
+* Type `git status`. You'll see that git has found a new "untracked" file
+* "Stage" the new file with `git add Code/FightClubRules.txt`
+* "Commit" the file, and give it a message to help you remember what you did, with something like `git commit -m "Create Fight Club Rules, add first rule"`
+ * Convention dictates these are short, imperative statements, e.g. "add/change/fix new thing"
+* Let's do it all again!
+ * Add a new line to the same file, something like `echo "2. Talk about Molecular Fight Club constantly" >> Code/MolecFightClubRules.txt`
+ * `git add Code/FightClubRules.txt`
+ * `git commit -m "Add second rule"`
+* Take a look at all the progress you've made with `git log`
+ * You can get a prettier, more concise view with `git log --all --decorate --oneline --graph`, just remember the mnemonic "A DOG"
+
+That's pretty much it, that's the basics of git. Now, you won't be committing every line individually, but you should commit often. It's good to keep your commits "atomic", meaning each contains a set of complete but self-contained changes. Maybe you added a new function, and you tested it and it works. Commit. Process the results for one of your samples into a figure? Commit. Make that loop through all your samples to plot in the same figure? Commit. You get the idea. Any time you find yourself thinking "Okay, if I mess the next thing up, I at least want to get back to this point", commit.
+
+So now for how you get back to that point. Did adding that second line break something, and you want to go back to an earlier commit? Look at the git log and find the seven-digit alphanumeric at the beginning of the line for the commit you want to go back to. This is called the *hash*, and it's git's name for that commit. Let's glance at what the code looked like at that point by running `git checkout 70fd0b1` (or whatever your first commit is called). Open up the file and you'll see the second line is now gone. We haven't erased that second commit, though. If you run the `git log` command again you'll see the commit is still there, but you're currently looking at the state of your code at the first commit (indicated by the `HEAD`). To do completely erase the second commit, first go back to most recent commit with `git checkout master` (or replace "master" with whatever branch you're on - more on branches below). Now type `git reset --hard 70fd0b1`, this will revert the code to its state at that point, clear all the commits between now and then, and also get rid of any *uncommitted* changes you've made. Your whole repository now looks exactly like it did then, and there's no going back.
+
+You can add multiple files at this point, for instance if you made interrelated changes to both your "processJG027" and "myUtils" files, but as a general rule I try to commit changes to one file at a time. Just remember, commit often. Your future self will thank you.
 
 #### Branching: A Safe Space to Experiment
 
