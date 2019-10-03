@@ -6,6 +6,18 @@ Git is the answer to this inevitable dilemma. Git and Github are powerful tools 
 
 First, I'll describe how to use git locally (on your computer, not the cloud) as a sort of lab notebook for your code. Next I'll talk about how to use the cloud service *Github* to host your code, keeping it private to yourself and a few collaborators or open for the whole world to see. Next, I'll show you how to use git "subtrees" to re-use utility code in a more elegant way than copy-pasting for every experiment. Finally, I'll work through a couple extra tools that make tracking binary files (e.g., Excel or Word documents, images) or Jupyter Notebooks easier to do.
 
+## Motivation
+
+So you have your experiment folders set up like I described in Part 1. Now, how do you save yourself from breaking your code? How do reuse your own code or someone else's? Copy-pasting works for a while, but how do you know where the most up-to-date version is? What if you're working on two experiments at the same time and modifying some utility code for both, how do you reconcile the changes with each other? 
+
+This guide will give you a framework for all that while keeping a few "rules" in mind:
+* Everything needed to reproduce experimental analysis should be in one granular folder
+* Supporting functions and utility code should remain in the state they were when the analysis was "completed"
+* There should be one "master" version of all utility code
+* It should be clear which experiments led to changes in to the utility code
+
+### TL;DR 
+
 ## Version Control: A Lab Notebook for Code
 
 In our experimental lab notebooks, we write down all the steps that allowed each experiment to come together into a finished project. The document becomes a record of the decisions we made along the way, when we changed course and when we needed to double-back because we set off in the wrong direction. Version Control Systems (VCS) like git allow us to do the same for our code. Think of git as a sort of "track changes" for your code. Each time you've completed a significant change to your code, you "commit" that change to make a new version with a brief description of what you did. Git keeps track of all these versions and the differences between them, allowing you to view a summary of your changes over time. If you've realized you made a mistake, you can easily revert your code to what it look like at one of your previous commits, back when you *know* it was working.
@@ -16,10 +28,11 @@ If you're on a Linux or Mac machine, you already have git installed. Just open a
 
 I'll only quickly go over how to use git in the context of my organization system. There are much more comprehensive guides out there. A few that I'd recommend:
 * __[A Friendly Intro to Git and Github](https://kirstiejane.github.io/friendly-github-intro/)__
-* __[An Interactive Git Tutorial](https://www.katacoda.com/courses/git)__
+* __[An Interactive Git Tutorial with Katacoda](https://www.katacoda.com/courses/git)__
  * __[Codecademy](https://www.codecademy.com/learn/learn-git)__ used to have a free tutorial, but it seems to be pro-only now...
 * __[Github's own guide](https://guides.github.com/activities/hello-world/)__
 * __[Git cheatsheet - "no deep shit"](https://rogerdudler.github.io/git-guide/)__
+* __[Reproducible Research in R](https://cambiotraining.github.io/reproducibility-training/)__
 
 ### Git Repos: Writing The Notebook Itself
 
@@ -60,4 +73,6 @@ So you're coding along happily, committing frequently, when you come to a crossr
 ## Large File System: Tracking Raw Data
 
 ## Git and Jupyter Notebooks: Filters
+
+# Summary and Cheatsheets
 
