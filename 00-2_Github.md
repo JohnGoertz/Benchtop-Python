@@ -16,7 +16,65 @@ This guide will give you a framework for all that while keeping a few "rules" in
 * There should be one "master" version of all utility code
 * It should be clear which experiments led to changes in to the utility code
 
-### TL;DR 
+### TL;DR
+
+Here's my framework in a nutshell, I'll go more into depth on each part in the rest of this guide.
+
+Let's say you have your Electronic Lab Notebook folder setup like this, with your master utility code folder next to experiments:
+
+```
+ELN
+├── JG027
+│   ├── Data
+│   └── Code
+│       ├── processJG027.ipynb
+│       └── Utils
+│           ├── myUtils.py
+│           └── processQuantStudio.py
+├── JG026
+├── JG025
+├── ...
+└── PythonUtils
+    ├── myUtils.py
+    └── processQuantStudio.py
+```
+
+I'll use `myeln` to navigate to this ELN folder. See part 1 for how to set up this alias in bash.
+
+A separate folder/repo holds the "master" version of the utility code, potentially published on Github for convenience
+ * `myeln`
+ * `cd PythonUtils`
+ * `git init`
+ * Now upload this to Github if you want
+ 
+Each experiment is its own repo, located in the parent folder for that experiment (e.g., JG027)
+ * `myeln`
+ * `cd JG027`
+ * `git init`
+
+Git subtree is used to clone the utility repo into the Code folder for each experiment
+ * `git remote add utils https://github.com/JohnGoertz/PythonUtils`
+   * alternatively, replace the url with the path to the "master" utilities repo)
+   * `git remote add utils ../PythonUtils`
+ * `git subtree add utils master --prefix=Code/Utils/ --squash`
+
+When you want to, update this version of the utility code stored in the experiment with the "master" version
+ * `git subtree pull --prefix=Code/Utils utils master --squash`
+
+Commit changes to either experiment-specific code or utility code as normal, but do __not__ commit changes both at the same time.
+
+When you want to update the "master" version of your utility code, push the changes to a branch named for the current experiment, in this case "JG027"
+   * `git subtree push --prefix=Code/Utils utils JG027 --squash`
+
+When you're "done" with the experiment, merge this branch into master
+ * `myeln`
+ * `cd PythonUtils`
+ * `git pull origin JG027` (to grab the new branch)
+ * `git pull origin master` (to make sure the master branch is up-to-date)
+ * `git merge JG027 --no-ff`
+   * I like the "no fast forward" option because it lets me see clearly which changes correspond to which experiment
+ * `git tag JG027`
+ * `git push origin --tags`
 
 ## Version Control: A Lab Notebook for Code
 
