@@ -76,6 +76,8 @@ from Utils import processQuantStudio as pQS
 
 so I can then call `paths = mypy.setupPath()` to gather the relevant addresses.
 
+I'd suggest keeping a template folder named something like "JG###" that contains empty Calculations/Code/Data/Results folders, and maybe a template .docx file for the notebook entry itself, so you can just copy/paste and rename for each new experiment. But hey, we're coders, right? There's got to be a way to make the computer do all that arduous work for us, right? At the bottom of this file I've put a small `bash` function that will automatically do all that for you, as well as some initial git commands (more on that in Part 2 of this guide). 
+
 ## Jupyter Notebooks
 
 The concept of organizing code in "notebooks" (be they Jupyter or RMarkDown) as opposed to purely scripts and modules (or, *shudder*, Excel files) has been gaining in popularity. Traditional scripts are meant to be executed from beginning to end, perhaps spitting out graph after graph along the way. It's possible to introduce some interactivity so a user can play with certain settings on the fly, but doing so takes quite a bit of code in its own right. Furthermore, annotating the code to describe what you're doing and why is done via in-line "comments", but these comments lend themselves to terse explanations and make it difficult to depict things like equations. Notebooks allow you to keep the outputs of your analysis side-by-side with the code that generated it, facilitate more thorough explanations, and enable interactivity. 
@@ -85,3 +87,64 @@ Notebooks organize code into "blocks" or "cells" with the output of each display
 Notebook cells can also contain formatted text instead of executable code. This text is in the very simple and elegant *markdown* format (like this document). You can include headers, bulletted/numbered lists, highlighted code snippets, and even equations written in LaTeX. For a complete list of Markdown formatting tools, go here. Math is inserted inline between single dollar signs `$...$` or you can put an equation on its own line with double dollar signs `$$...$$`; for an intro to writing equations in LaTeX (pronounced lah-tek), go __[here](https://en.wikibooks.org/wiki/LaTeX/Mathematics)__ or look at __[this cheatsheet](http://tug.ctan.org/info/undergradmath/undergradmath.pdf)__. The point of markdown cells is to give you the freedom to talk naturally about your code, so you should try to talk through what your code is doing and why as thoroughly as possible. Justifying your choices will help make you more certain of them, and your future self (and others) will thank you for the clarity.
 
 Finally, notebooks make it easy to make your code interactive. Perhaps you want to see how a result changes as you vary some parameter in the analysis. Jupyter allows you to change values with sliders or other tools and updates the result automatically. Again, though, be careful with this power. In the spirit of reproducibility, don't rely on the user setting the correct values each time the notebook is run; if you want to retain interactivity, at least set the default values to what you deem "correct".
+
+***
+# Summary
+
+Hopefully this has been a useful starting point for how to organize the digital side of your experiments. It all stems from a philosophy of reproducibility, ensuring you or others can replicate your results at any time in the future. This requires a file structure that is easy to remember and easy to maintain, one that keeps all the necessary pieces in one self-contained place. Writing data analysis in notebooks makes it clear how the code relates to our figures and outputs while encouraging natural descriptions of *why* each bit of code looks the way it does.
+
+In Part 2 of this guide I'll discuss how I use git and Github to bring this all together. These tools provide an elegant platform for keeping track of changes made to code, reusing code, and sharing it with others.
+
+***
+## Postscript: Managing this from the terminal
+
+If you write code regularly, you might benefit from getting familiar with how to navigate with the "terminal", using a command-line interface rather than a graphical one. This can make some operations much faster than doing them manually. If you're on a Mac or Linux machine, you already have a bash terminal at your disposal. If you're on Windows, I'd recommend steering clear of the "command prompt" and instead installing Windows Subsystem for Linux (WSL), specifically Ubuntu. It's relatively painless to set up, and it gives you access to a full-fledged Linux environment on your Windows computer. This is particularly important if you have to run software packages that require Linux (I'm glaring at you, __[Nupack](http://www.nupack.org)__).
+
+__[Here's](https://linuxhint.com/install_ubuntu_windows_10_wsl/)__ a good guide on how to go about getting set up with WSL. You'll really only need to know a couple commands, primarily just `cd` to move around your directories and `ls` to view all the files in your current directory. Once you launch the Ubuntu terminal in Windows, your default directory is a special Linux internal folder that will more or less look empty; type `cd /mnt/c/Users/<your Windows username>` to find your files.
+
+As promised, here's how to get the bash terminal to set up a new experiment folder for you.
+
+* `nano ~/.bashrc`
+* Navigate to the bottom of the file, then paste in the following. Replace all the "JG"s, and while you're welcome to use mine, you probably want to replace the URL for the utils repo with your own (more on that in part 2).
+```bash
+  alias myeln='cd /mnt/c/path/to/your/experiments/'
+
+  function mkELN ()
+  {
+        myeln
+        entry="JG$(ls | grep -e ^JG[0-9]*$ | sort -r | head -1 | awk -v FPAT="[0-9]+" '{printf "%03d\n", $NF+1}')"
+        
+        mkdir $entry
+        
+        cd $entry
+        
+        mkdir Code/
+        mkdir Data/
+        mkdir Results/
+        cp -r ../Templates/* ./
+        cp ../Templates/.gitignore ./
+        mv JGXXX.docx $entry".docx"
+        
+        git init
+        touch $entry"_README.md"
+        
+        git add $entry"_README.md"
+        git lfs track "Results/**"
+        git lfs track "*.xls*"
+        git add .gitattributes
+        git add .gitignore
+        
+        git commit -m "Initialize "$entry
+        
+        git remote add utils https://github.com/johngoertz/PythonUtils
+        git subtree add utils master --prefix=Code/Utils/ --squash
+        
+        cd Code/
+        touch "process"$entry.ipynb        
+}
+```
+* Press Ctrl-o to save the file
+* Press Ctrl-x to leave nano
+* Type `. ~/.bashrc` to re-run the bashrc file
+
+You're all set! Now if you want to get to the folder with all your experiments just type `myeln`. When you want to make a new experiment folder, all it takes is `mkELN`.
